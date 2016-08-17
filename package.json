@@ -1,0 +1,15 @@
+{
+  "name": "azure-blob-upload",
+  "version": "1.0.0",
+  "description": "backup to azure storage",
+  "main": "app_test.js",
+  "dependencies": {
+    "azure-storage": "^1.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
