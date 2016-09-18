@@ -4,7 +4,6 @@
   "description": "backup to azure storage",
   "main": "app_test.js",
   "dependencies": {
-    "azure-storage": "^1.1.0"
   },
   "devDependencies": {},
   "scripts": {
