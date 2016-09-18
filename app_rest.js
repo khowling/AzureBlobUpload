@@ -2,8 +2,9 @@ const fs = require('fs');
 const https = require('https');
 // application/octet-stream
 
-const storageaccurl = "testupload01.blob.core.windows.net",
-      acccontainer = "files",
+const storageacc = "danfilestest",
+      storageaccurl = `${storageacc}.blob.core.windows.net`,
+      acccontainer = "london",
       sas = "sv=2015-04-05&" + 
             "ss=b&" +
             "srt=sco&" +
@@ -13,6 +14,59 @@ const storageaccurl = "testupload01.blob.core.windows.net",
             "sip=0.0.0.0-255.255.255.255&" +
             "spr=https&" +
             "sig=SXSxvatYtHRjR1ga2LtymPqQC530LSwl4q271NB9CAE%3D"
+// ---------------------------------------------- Create Container ACL
+function createACL (key) {
+    return new Promise ((acc,rej) => {
+       const    path = `/${acccontainer}?restype=container&comp=acl&${sas}`,
+                bit64 = Buffer.from(`ACCESS${acccontainer}`).toString('base64'),
+                data =  Buffer.from(`<?xml version="1.0" encoding="utf-8"?>` + //'\n' +
+                        '<SignedIdentifiers>' + //'\n' +
+                        '<SignedIdentifier>' + //'\n' +
+                        `   <Id>${bit64}</Id>` + //'\n' +
+                        '   <AccessPolicy>' + //'\n' +
+                        `   <Start>${new Date(new Date().getTime() + 1000 * 60).toISOString()}</Start>` + //'\n' +
+                        `   <Expiry>${new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString()}</Expiry>` + //'\n' +
+                       // `   <Expiry>${new Date().setDate(new Date().getDate() + 1).toISOString()}</Expiry>` + '\n' +
+                        '    <Permission>rwd</Permission>' + //'\n' +
+                        '    </AccessPolicy>' + //'\n' +
+                        '</SignedIdentifier>' + //'\n' +
+                        '</SignedIdentifiers>').toString('utf8'),
+                headers = {
+                    "x-ms-date": new Date().toUTCString(),
+                    "Content-Length": data.length
+                },
+                headers_old = {
+                    "x-ms-date": new Date().toUTCString(),
+                    "Authorization": `SharedKey ${storageacc}:${new Buffer(sas).toString('base64')}`,
+                    "Content-Type": "application/xml"
+                }
+
+
+        console.log (`createACL data ${storageaccurl}${path} ${JSON.stringify(headers)} : ${data}`)
+        let putreq = https.request({
+                hostname: storageaccurl,
+                path: path,
+                method: 'PUT',
+                headers: headers
+                }, (res) => {
+                    res.on('data', (d) => {
+                        console.error (`on data ${d}`)
+                    });
+
+                    if(res.statusCode == 200 || res.statusCode == 201) {
+                        settled+= data.length
+                        acc(blockid)
+                    } else {
+                        errors++
+                        rej(res.statusCode)
+                    }
+                }).on('error', (e) =>  rej(e));
+
+        putreq.write (data)
+        putreq.end()
+        sent+= data.length
+    })
+}
 
 // ---------------------------------------------- DELETE BLOCKS
 function deleteblobs (fileName) {
@@ -122,5 +176,6 @@ function upload(fileName) {
     }).on('error', (e) => console.error ('error : ' + e));
 }
 
-upload(process.argv[2])
+//upload(process.argv[2])
 //deleteblobs(process.argv[2])
+createACL("SMFRTEuftn75OozPS9phbowpI7H+wsIWDaAufX2EKvnmtq3ULKmw5UL5wRrLgtkxp7wnDT9GcFWrS1zdSN+bEQ==").then ((ok) => console.log ('ok'), (err) => console.warn (err));
